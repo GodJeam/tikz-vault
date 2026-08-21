@@ -30,7 +30,7 @@ For the build you also need **Node.js**.
 1. Clone the repo and build:
 
 ```bash
-git clone https://github.com/<your-username>/tikz-vault.git
+git clone https://github.com/GodJeam/tikz-vault.git
 cd tikz-vault
 npm install
 npm run build
