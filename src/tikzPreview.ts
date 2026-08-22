@@ -72,12 +72,6 @@ class TikzPreviewWidget extends WidgetType {
     status.textContent = this.t("Rendering TikZ...");
     wrap.appendChild(status);
 
-    // The code is hidden by default and revealed on hover.
-    const source = document.createElement("pre");
-    source.className = "tikz-source";
-    source.textContent = this.code;
-    wrap.appendChild(source);
-
     this.renderFn(this.code)
       .then((svg) => {
         if (this.destroyed) return;
@@ -86,10 +80,7 @@ class TikzPreviewWidget extends WidgetType {
         fig.className = "tikz-figure";
         fig.innerHTML = svg;
         wrap.appendChild(fig);
-        const src2 = document.createElement("pre");
-        src2.className = "tikz-source";
-        src2.textContent = this.code;
-        wrap.appendChild(src2);
+        wrap.appendChild(this.buildSource());
       })
       .catch((err) => {
         if (this.destroyed) return;
@@ -105,13 +96,23 @@ class TikzPreviewWidget extends WidgetType {
         pre.textContent = err instanceof Error ? err.message : String(err);
         errBox.appendChild(pre);
         wrap.appendChild(errBox);
-        const src2 = document.createElement("pre");
-        src2.className = "tikz-source";
-        src2.textContent = this.code;
-        wrap.appendChild(src2);
+        wrap.appendChild(this.buildSource());
       });
 
     return wrap;
+  }
+
+  // The source code is shown inside a closed toggle (click to expand).
+  private buildSource(): HTMLElement {
+    const det = document.createElement("details");
+    det.className = "tikz-source";
+    const sum = document.createElement("summary");
+    sum.textContent = this.t("Show TikZ code");
+    det.appendChild(sum);
+    const pre = document.createElement("pre");
+    pre.textContent = this.code;
+    det.appendChild(pre);
+    return det;
   }
 
   destroy(): void {

@@ -285,10 +285,6 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
     status.className = "tikz-status";
     status.textContent = this.t("Rendering TikZ...");
     wrap.appendChild(status);
-    const source = document.createElement("pre");
-    source.className = "tikz-source";
-    source.textContent = this.code;
-    wrap.appendChild(source);
     this.renderFn(this.code).then((svg) => {
       if (this.destroyed) return;
       wrap.replaceChildren();
@@ -296,10 +292,7 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
       fig.className = "tikz-figure";
       fig.innerHTML = svg;
       wrap.appendChild(fig);
-      const src2 = document.createElement("pre");
-      src2.className = "tikz-source";
-      src2.textContent = this.code;
-      wrap.appendChild(src2);
+      wrap.appendChild(this.buildSource());
     }).catch((err) => {
       if (this.destroyed) return;
       wrap.replaceChildren();
@@ -314,12 +307,21 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
       pre.textContent = err instanceof Error ? err.message : String(err);
       errBox.appendChild(pre);
       wrap.appendChild(errBox);
-      const src2 = document.createElement("pre");
-      src2.className = "tikz-source";
-      src2.textContent = this.code;
-      wrap.appendChild(src2);
+      wrap.appendChild(this.buildSource());
     });
     return wrap;
+  }
+  // The source code is shown inside a closed toggle (click to expand).
+  buildSource() {
+    const det = document.createElement("details");
+    det.className = "tikz-source";
+    const sum = document.createElement("summary");
+    sum.textContent = this.t("Show TikZ code");
+    det.appendChild(sum);
+    const pre = document.createElement("pre");
+    pre.textContent = this.code;
+    det.appendChild(pre);
+    return det;
   }
   destroy() {
     this.destroyed = true;
@@ -514,6 +516,7 @@ var IT = {
   "Clear": "Svuota",
   "TikZ cache cleared.": "Cache TikZ svuotata.",
   "Rendering TikZ with local TeX...": "Rendering TikZ con TeX locale\u2026",
+  "Show TikZ code": "Mostra codice TikZ",
   "TikZ rendering error": "Errore di rendering TikZ",
   "Rendering TikZ...": "Rendering TikZ\u2026"
 };
