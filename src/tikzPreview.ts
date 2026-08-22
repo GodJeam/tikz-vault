@@ -49,7 +49,8 @@ class TikzPreviewWidget extends WidgetType {
 
   constructor(
     readonly code: string,
-    private renderFn: (code: string) => Promise<string>
+    private renderFn: (code: string) => Promise<string>,
+    private t: (s: string) => string
   ) {
     super();
   }
@@ -64,7 +65,7 @@ class TikzPreviewWidget extends WidgetType {
 
     const status = document.createElement("div");
     status.className = "tikz-status";
-    status.textContent = "Rendering TikZ…";
+    status.textContent = this.t("Rendering TikZ...");
     wrap.appendChild(status);
 
     this.renderFn(this.code)
@@ -83,7 +84,7 @@ class TikzPreviewWidget extends WidgetType {
         errBox.className = "tikz-error";
         const title = document.createElement("div");
         title.className = "tikz-error-title";
-        title.textContent = "Errore di rendering TikZ";
+        title.textContent = this.t("TikZ rendering error");
         errBox.appendChild(title);
         const pre = document.createElement("pre");
         pre.className = "tikz-error-msg";
@@ -113,11 +114,11 @@ function computeDecorations(state: EditorState, plugin: TikzVaultPlugin) {
       builder.add(
         block.to,
         block.to,
-        Decoration.widget({ widget: new TikzPreviewWidget(block.code, render), block: true, side: 1 })
+        Decoration.widget({ widget: new TikzPreviewWidget(block.code, render, plugin.t), block: true, side: 1 })
       );
     }
   } catch (e) {
-    console.error("tikz-vault: errore nella costruzione delle decorazioni TikZ:", e);
+    console.error("tikz-vault: error building TikZ decorations:", e);
   }
   return builder.finish();
 }

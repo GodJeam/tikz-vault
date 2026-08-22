@@ -2,6 +2,7 @@ import { Plugin } from "obsidian";
 import { TikzRenderer } from "./tikzRenderer";
 import { tikzPreviewExtension } from "./tikzPreview";
 import { DEFAULT_SETTINGS, TikzSettingTab, TikzSettings } from "./settings";
+import { translate } from "./i18n";
 
 export default class TikzVaultPlugin extends Plugin {
   settings!: TikzSettings;
@@ -31,17 +32,22 @@ export default class TikzVaultPlugin extends Plugin {
               pre.replaceWith(container);
               await this.fillTikzContainer(container, code);
             } catch (e) {
-              console.error("tikz-vault: errore nel post-processor TikZ:", e);
+              console.error("tikz-vault: error in the TikZ post-processor:", e);
             }
           }
         } catch (e) {
-          console.error("tikz-vault: errore nel post-processor TikZ:", e);
+          console.error("tikz-vault: error in the TikZ post-processor:", e);
         }
       },
       -1000
     );
 
     this.addSettingTab(new TikzSettingTab(this.app, this));
+  }
+
+  // Translate a UI string according to the selected language.
+  t(text: string): string {
+    return translate(this.settings?.language ?? "en", text);
   }
 
   onunload(): void {}
@@ -51,7 +57,7 @@ export default class TikzVaultPlugin extends Plugin {
     container.className = "tikz-result";
     container.dataset.tikzCode = code;
     const status = container.createEl("div", { cls: "tikz-status" });
-    status.setText("Rendering TikZ con TeX locale…");
+    status.setText(this.t("Rendering TikZ with local TeX..."));
     status.addClass("tikz-loading");
     return container;
   }
@@ -65,7 +71,7 @@ export default class TikzVaultPlugin extends Plugin {
       figure.innerHTML = svg;
       const toggle = container.createEl("details", { cls: "tikz-toggle" });
       const summary = toggle.createEl("summary");
-      summary.setText("Mostra codice TikZ");
+      summary.setText(this.t("Show TikZ code"));
       const codePre = toggle.createEl("pre");
       const codeOut = codePre.createEl("code");
       codeOut.setText(code);
@@ -73,7 +79,7 @@ export default class TikzVaultPlugin extends Plugin {
       status?.remove();
       const errBox = container.createEl("div", { cls: "tikz-error" });
       errBox.createEl("div", {
-        text: "Errore di rendering TikZ",
+        text: this.t("TikZ rendering error"),
         cls: "tikz-error-title",
       });
       errBox.createEl("pre", {
@@ -82,7 +88,7 @@ export default class TikzVaultPlugin extends Plugin {
       });
       const toggle = errBox.createEl("details", { cls: "tikz-toggle" });
       const summary = toggle.createEl("summary");
-      summary.setText("Mostra codice TikZ");
+      summary.setText(this.t("Show TikZ code"));
       const codePre = toggle.createEl("pre");
       const codeOut = codePre.createEl("code");
       codeOut.setText(code);

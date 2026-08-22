@@ -91,7 +91,7 @@ export class TikzRenderer {
       if (!latexPdf && !latexDvi) missing.push("latex/pdflatex");
       if (!dvisvgm) missing.push("dvisvgm");
       throw new Error(
-        `Binario ${missing.join(" e ")} non trovato. Verifica l'installazione di TeX oppure imposta i percorsi nelle impostazioni del plugin.`
+        `Binary ${missing.join(" and ")} not found. Check the TeX installation or set the paths in the plugin settings.`
       );
     }
 
@@ -100,7 +100,7 @@ export class TikzRenderer {
       try {
         await engine.build(dir);
         if (!existsSync(svgFile)) {
-          throw new Error(`dvisvgm non ha prodotto alcun SVG (engine ${engine.label})`);
+          throw new Error(`dvisvgm did not produce any SVG (engine ${engine.label})`);
         }
         const svg = readFileSync(svgFile, "utf8");
         return this.cleanSvg(svg);
@@ -110,7 +110,7 @@ export class TikzRenderer {
           try {
             rmSync(join(dir, f), { force: true });
           } catch {
-            // ignora
+            // ignore
           }
         }
       }
@@ -124,13 +124,13 @@ export class TikzRenderer {
       rmSync(this.cacheDir, { recursive: true, force: true });
       mkdirSync(this.cacheDir, { recursive: true });
     } catch {
-      // ignora
+      // ignore
     }
   }
 
   private buildTexSource(code: string, extraPreamble: string): string {
     const src = code.replace(/\r\n/g, "\n").trim();
-    if (!src) throw new Error("Il blocco TikZ è vuoto.");
+    if (!src) throw new Error("The TikZ block is empty.");
 
     if (/\\documentclass\s*\{/.test(src)) {
       return src;
@@ -144,7 +144,7 @@ export class TikzRenderer {
       body = src.slice(envMatch.index).trim();
       const env = envMatch[1];
       if (env !== "tikzpicture" && env !== "tikzcd") {
-        // ambienti come "axis": li avvolge in un tikzpicture
+        // environments like "axis": wrap them in a tikzpicture
         body = "\\begin{tikzpicture}\n" + body + "\n\\end{tikzpicture}";
       }
     } else if (!/\\tikz\s*[{\[]/.test(src)) {
@@ -185,7 +185,7 @@ export class TikzRenderer {
     const detail = errors.length
       ? errors.map((e, i) => `Tentativo ${i + 1}: ${e}`).join("\n\n")
       : "";
-    return detail + (tail ? `\n\n--- log LaTeX ---\n${tail}` : "");
+    return detail + (tail ? `\n\n--- LaTeX log ---\n${tail}` : "");
   }
 
   private resolveLatex(engine: "pdf" | "dvi"): string {
@@ -229,11 +229,11 @@ export class TikzRenderer {
           if (error) {
             const e = error as NodeJS.ErrnoException;
             if (e.code === "ENOENT") {
-              reject(new Error(`Eseguibile non trovato: ${bin}`));
+              reject(new Error(`Executable not found: ${bin}`));
             } else if (typeof e.code === "number") {
               reject(
                 new Error(
-                  `Errore (exit code ${e.code}) da ${bin}: ${(stderr || "").trim() || _stdout.trim()}`
+                  `Error (exit code ${e.code}) from ${bin}: ${(stderr || "").trim() || _stdout.trim()}`
                 )
               );
             } else {
