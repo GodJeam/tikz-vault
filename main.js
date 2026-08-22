@@ -236,6 +236,7 @@ ${tail}` : "");
 // src/tikzPreview.ts
 var import_state = require("@codemirror/state");
 var import_view = require("@codemirror/view");
+var import_language = require("@codemirror/language");
 var TIKZ_LANG = /^```(tikz|tikzcd|pgfplots)(\s|$)/i;
 var CLOSING_FENCE = /^```\s*$/;
 function findTikzBlocks(state) {
@@ -292,7 +293,6 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
       fig.className = "tikz-figure";
       fig.innerHTML = svg;
       wrap.appendChild(fig);
-      wrap.appendChild(this.buildSource());
     }).catch((err) => {
       if (this.destroyed) return;
       wrap.replaceChildren();
@@ -307,21 +307,8 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
       pre.textContent = err instanceof Error ? err.message : String(err);
       errBox.appendChild(pre);
       wrap.appendChild(errBox);
-      wrap.appendChild(this.buildSource());
     });
     return wrap;
-  }
-  // The source code is shown inside a closed toggle (click to expand).
-  buildSource() {
-    const det = document.createElement("details");
-    det.className = "tikz-source";
-    const sum = document.createElement("summary");
-    sum.textContent = this.t("Show TikZ code");
-    det.appendChild(sum);
-    const pre = document.createElement("pre");
-    pre.textContent = this.code;
-    det.appendChild(pre);
-    return det;
   }
   destroy() {
     this.destroyed = true;
@@ -336,10 +323,6 @@ function computeDecorations(state, plugin) {
   const render = (code) => plugin.tikzRenderer.render(code);
   try {
     for (const block of findTikzBlocks(state)) {
-      for (let k = block.fromLine; k <= block.toLine; k++) {
-        const pos = state.doc.line(k).from;
-        builder.add(pos, pos, import_view.Decoration.line({ class: "tikz-code-hidden" }));
-      }
       builder.add(
         block.to,
         block.to,
@@ -353,6 +336,7 @@ function computeDecorations(state, plugin) {
 }
 var tikzRecalcEffect = import_state.StateEffect.define();
 function tikzPreviewExtension(plugin) {
+  let foldedOnce = false;
   const field = import_state.StateField.define({
     create(state) {
       return computeDecorations(state, plugin);
@@ -376,6 +360,19 @@ function tikzPreviewExtension(plugin) {
     import_view.EditorView.updateListener.of((update) => {
       if (update.viewportChanged) {
         update.view.dispatch({ effects: tikzRecalcEffect.of(null) });
+      }
+      if (!foldedOnce && plugin.settings.tikzEnabled && plugin.settings.tikzLivePreview) {
+        foldedOnce = true;
+        try {
+          const blocks = findTikzBlocks(update.state);
+          if (blocks.length > 0) {
+            update.view.dispatch({
+              effects: blocks.map((b) => import_language.foldEffect.of({ from: b.from, to: b.to }))
+            });
+          }
+        } catch (e) {
+          console.error("tikz-vault: error auto-folding TikZ blocks:", e);
+        }
       }
     })
   ];
@@ -516,7 +513,6 @@ var IT = {
   "Clear": "Svuota",
   "TikZ cache cleared.": "Cache TikZ svuotata.",
   "Rendering TikZ with local TeX...": "Rendering TikZ con TeX locale\u2026",
-  "Show TikZ code": "Mostra codice TikZ",
   "TikZ rendering error": "Errore di rendering TikZ",
   "Rendering TikZ...": "Rendering TikZ\u2026"
 };

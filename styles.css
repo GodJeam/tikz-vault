@@ -38,44 +38,8 @@
   animation: tikz-spin 0.8s linear infinite;
 }
 
-/* Hide the TikZ code fence in Edit mode; the rendered image is shown instead
-   and the source code is available behind a closed toggle. */
-.cm-line.tikz-code-hidden {
-  display: none !important;
-}
-
-.tikz-live .tikz-source {
-  width: 100%;
-  margin-top: 6px;
-  text-align: left;
-  font-size: var(--font-smaller);
-  color: var(--text-muted);
-}
-
-.tikz-live .tikz-source summary {
-  cursor: pointer;
-  user-select: none;
-  opacity: 0.85;
-}
-
-.tikz-live .tikz-source summary:hover {
-  opacity: 1;
-  color: var(--interactive-accent);
-}
-
-.tikz-live .tikz-source pre {
-  margin: 6px 0 0;
-  max-height: 220px;
-  overflow: auto;
-  background: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-s);
-  padding: 8px;
-  font-family: var(--font-monospace);
-  font-size: var(--font-smaller);
-  white-space: pre;
-}
-
+/* In Edit mode the TikZ code blocks are folded by default (Code Styler's
+   toggle starts closed); the rendered image is shown in the widget below. */
 .tikz-live {
   display: flex;
   flex-direction: column;
