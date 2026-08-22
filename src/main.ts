@@ -69,12 +69,6 @@ export default class TikzVaultPlugin extends Plugin {
       status?.remove();
       const figure = container.createEl("div", { cls: "tikz-figure" });
       figure.innerHTML = svg;
-      const toggle = container.createEl("details", { cls: "tikz-toggle" });
-      const summary = toggle.createEl("summary");
-      summary.setText(this.t("Show TikZ code"));
-      const codePre = toggle.createEl("pre");
-      const codeOut = codePre.createEl("code");
-      codeOut.setText(code);
     } catch (e) {
       status?.remove();
       const errBox = container.createEl("div", { cls: "tikz-error" });
@@ -86,12 +80,6 @@ export default class TikzVaultPlugin extends Plugin {
         text: e instanceof Error ? e.message : String(e),
         cls: "tikz-error-msg",
       });
-      const toggle = errBox.createEl("details", { cls: "tikz-toggle" });
-      const summary = toggle.createEl("summary");
-      summary.setText(this.t("Show TikZ code"));
-      const codePre = toggle.createEl("pre");
-      const codeOut = codePre.createEl("code");
-      codeOut.setText(code);
     }
   }
 

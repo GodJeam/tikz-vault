@@ -47,7 +47,6 @@ const IT: Record<string, string> = {
   "Clear": "Svuota",
   "TikZ cache cleared.": "Cache TikZ svuotata.",
   "Rendering TikZ with local TeX...": "Rendering TikZ con TeX locale…",
-  "Show TikZ code": "Mostra codice TikZ",
   "TikZ rendering error": "Errore di rendering TikZ",
   "Rendering TikZ...": "Rendering TikZ…",
 };

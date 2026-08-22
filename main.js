@@ -514,7 +514,6 @@ var IT = {
   "Clear": "Svuota",
   "TikZ cache cleared.": "Cache TikZ svuotata.",
   "Rendering TikZ with local TeX...": "Rendering TikZ con TeX locale\u2026",
-  "Show TikZ code": "Mostra codice TikZ",
   "TikZ rendering error": "Errore di rendering TikZ",
   "Rendering TikZ...": "Rendering TikZ\u2026"
 };
@@ -582,12 +581,6 @@ var TikzVaultPlugin = class extends import_obsidian2.Plugin {
       status == null ? void 0 : status.remove();
       const figure = container.createEl("div", { cls: "tikz-figure" });
       figure.innerHTML = svg;
-      const toggle = container.createEl("details", { cls: "tikz-toggle" });
-      const summary = toggle.createEl("summary");
-      summary.setText(this.t("Show TikZ code"));
-      const codePre = toggle.createEl("pre");
-      const codeOut = codePre.createEl("code");
-      codeOut.setText(code);
     } catch (e) {
       status == null ? void 0 : status.remove();
       const errBox = container.createEl("div", { cls: "tikz-error" });
@@ -599,12 +592,6 @@ var TikzVaultPlugin = class extends import_obsidian2.Plugin {
         text: e instanceof Error ? e.message : String(e),
         cls: "tikz-error-msg"
       });
-      const toggle = errBox.createEl("details", { cls: "tikz-toggle" });
-      const summary = toggle.createEl("summary");
-      summary.setText(this.t("Show TikZ code"));
-      const codePre = toggle.createEl("pre");
-      const codeOut = codePre.createEl("code");
-      codeOut.setText(code);
     }
   }
   async saveSettings() {
