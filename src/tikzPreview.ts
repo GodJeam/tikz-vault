@@ -1,6 +1,5 @@
 import { RangeSetBuilder, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
-import { foldEffect } from "@codemirror/language";
 import type { EditorState } from "@codemirror/state";
 import type TikzVaultPlugin from "./main";
 
@@ -81,6 +80,7 @@ class TikzPreviewWidget extends WidgetType {
         fig.className = "tikz-figure";
         fig.innerHTML = svg;
         wrap.appendChild(fig);
+        wrap.appendChild(this.buildSource());
       })
       .catch((err) => {
         if (this.destroyed) return;
@@ -96,9 +96,23 @@ class TikzPreviewWidget extends WidgetType {
         pre.textContent = err instanceof Error ? err.message : String(err);
         errBox.appendChild(pre);
         wrap.appendChild(errBox);
+        wrap.appendChild(this.buildSource());
       });
 
     return wrap;
+  }
+
+  // The source code is shown inside a closed toggle (click to expand).
+  private buildSource(): HTMLElement {
+    const det = document.createElement("details");
+    det.className = "tikz-source";
+    const sum = document.createElement("summary");
+    sum.textContent = this.t("Show TikZ code");
+    det.appendChild(sum);
+    const pre = document.createElement("pre");
+    pre.textContent = this.code;
+    det.appendChild(pre);
+    return det;
   }
 
   destroy(): void {
@@ -116,6 +130,12 @@ function computeDecorations(state: EditorState, plugin: TikzVaultPlugin) {
   const render = (code: string) => plugin.tikzRenderer.render(code);
   try {
     for (const block of findTikzBlocks(state)) {
+      // Hide the code fence lines in Edit mode; the image widget below shows
+      // the rendering and the code is available behind a closed toggle.
+      for (let k = block.fromLine; k <= block.toLine; k++) {
+        const pos = state.doc.line(k).from;
+        builder.add(pos, pos, Decoration.line({ class: "tikz-code-hidden" }));
+      }
       builder.add(
         block.to,
         block.to,
@@ -131,7 +151,6 @@ function computeDecorations(state: EditorState, plugin: TikzVaultPlugin) {
 const tikzRecalcEffect = StateEffect.define<null>();
 
 export function tikzPreviewExtension(plugin: TikzVaultPlugin) {
-  let foldedOnce = false;
   const field = StateField.define({
     create(state: EditorState) {
       return computeDecorations(state, plugin);
@@ -156,21 +175,6 @@ export function tikzPreviewExtension(plugin: TikzVaultPlugin) {
     EditorView.updateListener.of((update) => {
       if (update.viewportChanged) {
         update.view.dispatch({ effects: tikzRecalcEffect.of(null) });
-      }
-      // Fold the TikZ code blocks once on open, so the Code Styler toggle
-      // starts closed (the rendered image is what is shown).
-      if (!foldedOnce && plugin.settings.tikzEnabled && plugin.settings.tikzLivePreview) {
-        foldedOnce = true;
-        try {
-          const blocks = findTikzBlocks(update.state);
-          if (blocks.length > 0) {
-            update.view.dispatch({
-              effects: blocks.map((b) => foldEffect.of({ from: b.from, to: b.to })),
-            });
-          }
-        } catch (e) {
-          console.error("tikz-vault: error auto-folding TikZ blocks:", e);
-        }
       }
     }),
   ];
