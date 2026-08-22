@@ -52,6 +52,7 @@ export class TikzSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.language = value as Language;
             await this.plugin.saveSettings();
+            new Notice(t("Language changed. Reload Obsidian to apply it everywhere."));
             this.display();
           })
       );

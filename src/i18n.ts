@@ -6,6 +6,8 @@ const IT: Record<string, string> = {
   "Language": "Lingua",
   "Interface language. English is the default. Some command names update after reloading Obsidian.":
     "Lingua dell'interfaccia. L'inglese è il default. Alcuni nomi dei comandi si aggiornano dopo il ricaricamento di Obsidian.",
+  "Language changed. Reload Obsidian to apply it everywhere.":
+    "Lingua cambiata. Ricarica Obsidian per applicarla ovunque.",
   "English": "Inglese",
   "Italian": "Italiano",
   "Rendering TikZ": "Rendering TikZ",

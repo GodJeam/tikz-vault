@@ -389,6 +389,7 @@ var TikzSettingTab = class extends import_obsidian.PluginSettingTab {
       (dd) => dd.addOption("en", t("English")).addOption("it", t("Italian")).setValue(this.plugin.settings.language).onChange(async (value) => {
         this.plugin.settings.language = value;
         await this.plugin.saveSettings();
+        new import_obsidian.Notice(t("Language changed. Reload Obsidian to apply it everywhere."));
         this.display();
       })
     );
@@ -466,6 +467,7 @@ var TikzSettingTab = class extends import_obsidian.PluginSettingTab {
 var IT = {
   "Language": "Lingua",
   "Interface language. English is the default. Some command names update after reloading Obsidian.": "Lingua dell'interfaccia. L'inglese \xE8 il default. Alcuni nomi dei comandi si aggiornano dopo il ricaricamento di Obsidian.",
+  "Language changed. Reload Obsidian to apply it everywhere.": "Lingua cambiata. Ricarica Obsidian per applicarla ovunque.",
   "English": "Inglese",
   "Italian": "Italiano",
   "Rendering TikZ": "Rendering TikZ",
