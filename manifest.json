@@ -4,6 +4,6 @@
   "version": "0.1.0",
   "minAppVersion": "1.5.0",
   "description": "Rendering of TikZ/tikzcd/pgfplots code blocks in your vault using a local TeX installation (MiKTeX/TeX Live).",
-  "author": "Giuli",
+  "author": "GodJeam",
   "isDesktopOnly": true
 }
