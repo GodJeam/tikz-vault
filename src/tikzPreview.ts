@@ -165,29 +165,29 @@ function computeDecorations(state: EditorState, plugin: TikzVaultPlugin, expande
   return builder.finish();
 }
 
-const tikzField = StateField.define<{ deco: DecorationSet; expanded: Set<number> }>({
-  create(state: EditorState) {
-    return { deco: computeDecorations(state, plugin, new Set()), expanded: new Set() };
-  },
-  update(value, tr) {
-    const relevant =
-      tr.docChanged ||
-      tr.effects.some((e) => e.is(tikzExpandEffect) || e.is(tikzCollapseEffect) || e.is(tikzRecalcEffect));
-    if (!relevant) return value;
-    const expanded = new Set<number>();
-    for (const pos of value.expanded) expanded.add(tr.changes.mapPos(pos, -1));
-    for (const e of tr.effects) {
-      if (e.is(tikzExpandEffect)) expanded.add(e.value);
-      else if (e.is(tikzCollapseEffect)) expanded.delete(e.value);
-    }
-    return { deco: computeDecorations(tr.state, plugin, expanded), expanded };
-  },
-  provide: (f) => EditorView.decorations.from(f, (v) => v.deco),
-});
-
 export function tikzPreviewExtension(plugin: TikzVaultPlugin) {
+  const field = StateField.define<{ deco: DecorationSet; expanded: Set<number> }>({
+    create(state: EditorState) {
+      return { deco: computeDecorations(state, plugin, new Set()), expanded: new Set() };
+    },
+    update(value, tr) {
+      const relevant =
+        tr.docChanged ||
+        tr.effects.some((e) => e.is(tikzExpandEffect) || e.is(tikzCollapseEffect) || e.is(tikzRecalcEffect));
+      if (!relevant) return value;
+      const expanded = new Set<number>();
+      for (const pos of value.expanded) expanded.add(tr.changes.mapPos(pos, -1));
+      for (const e of tr.effects) {
+        if (e.is(tikzExpandEffect)) expanded.add(e.value);
+        else if (e.is(tikzCollapseEffect)) expanded.delete(e.value);
+      }
+      return { deco: computeDecorations(tr.state, plugin, expanded), expanded };
+    },
+    provide: (f) => EditorView.decorations.from(f, (v) => v.deco),
+  });
+
   return [
-    tikzField,
+    field,
     EditorView.updateListener.of((update) => {
       if (update.viewportChanged) {
         update.view.dispatch({ effects: tikzRecalcEffect.of(null) });

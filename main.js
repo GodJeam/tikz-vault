@@ -267,16 +267,21 @@ function findTikzBlocks(state) {
   }
   return blocks;
 }
+var tikzExpandEffect = import_state.StateEffect.define();
+var tikzCollapseEffect = import_state.StateEffect.define();
+var tikzRecalcEffect = import_state.StateEffect.define();
 var TikzPreviewWidget = class extends import_view.WidgetType {
-  constructor(code, renderFn, t) {
+  constructor(code, renderFn, t, from, expanded) {
     super();
     this.code = code;
     this.renderFn = renderFn;
     this.t = t;
+    this.from = from;
+    this.expanded = expanded;
     this.destroyed = false;
   }
   eq(other) {
-    return other.code === this.code;
+    return other.code === this.code && other.from === this.from && other.expanded === this.expanded;
   }
   toDOM() {
     const wrap = document.createElement("div");
@@ -285,6 +290,19 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
     status.className = "tikz-status";
     status.textContent = this.t("Rendering TikZ...");
     wrap.appendChild(status);
+    const finish = () => {
+      const btn = document.createElement("button");
+      btn.className = "tikz-source-toggle";
+      btn.textContent = this.expanded ? this.t("Hide TikZ code") : this.t("Show TikZ code");
+      btn.addEventListener("click", () => {
+        const view = import_view.EditorView.findFromDOM(wrap);
+        if (!view) return;
+        view.dispatch({
+          effects: this.expanded ? tikzCollapseEffect.of(this.from) : tikzExpandEffect.of(this.from)
+        });
+      });
+      wrap.appendChild(btn);
+    };
     this.renderFn(this.code).then((svg) => {
       if (this.destroyed) return;
       wrap.replaceChildren();
@@ -292,7 +310,7 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
       fig.className = "tikz-figure";
       fig.innerHTML = svg;
       wrap.appendChild(fig);
-      wrap.appendChild(this.buildSource());
+      finish();
     }).catch((err) => {
       if (this.destroyed) return;
       wrap.replaceChildren();
@@ -307,21 +325,9 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
       pre.textContent = err instanceof Error ? err.message : String(err);
       errBox.appendChild(pre);
       wrap.appendChild(errBox);
-      wrap.appendChild(this.buildSource());
+      finish();
     });
     return wrap;
-  }
-  // The source code is shown inside a closed toggle (click to expand).
-  buildSource() {
-    const det = document.createElement("details");
-    det.className = "tikz-source";
-    const sum = document.createElement("summary");
-    sum.textContent = this.t("Show TikZ code");
-    det.appendChild(sum);
-    const pre = document.createElement("pre");
-    pre.textContent = this.code;
-    det.appendChild(pre);
-    return det;
   }
   destroy() {
     this.destroyed = true;
@@ -330,20 +336,26 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
     return true;
   }
 };
-function computeDecorations(state, plugin) {
+function computeDecorations(state, plugin, expanded) {
   if (!plugin.settings.tikzEnabled || !plugin.settings.tikzLivePreview) return import_view.Decoration.none;
   const builder = new import_state.RangeSetBuilder();
   const render = (code) => plugin.tikzRenderer.render(code);
   try {
     for (const block of findTikzBlocks(state)) {
-      for (let k = block.fromLine; k <= block.toLine; k++) {
-        const pos = state.doc.line(k).from;
-        builder.add(pos, pos, import_view.Decoration.line({ class: "tikz-code-hidden" }));
+      if (!expanded.has(block.from)) {
+        for (let k = block.fromLine; k <= block.toLine; k++) {
+          const pos = state.doc.line(k).from;
+          builder.add(pos, pos, import_view.Decoration.line({ class: "tikz-code-hidden" }));
+        }
       }
       builder.add(
         block.to,
         block.to,
-        import_view.Decoration.widget({ widget: new TikzPreviewWidget(block.code, render, plugin.t), block: true, side: 1 })
+        import_view.Decoration.widget({
+          widget: new TikzPreviewWidget(block.code, render, plugin.t, block.from, expanded.has(block.from)),
+          block: true,
+          side: 1
+        })
       );
     }
   } catch (e) {
@@ -351,25 +363,23 @@ function computeDecorations(state, plugin) {
   }
   return builder.finish();
 }
-var tikzRecalcEffect = import_state.StateEffect.define();
 function tikzPreviewExtension(plugin) {
   const field = import_state.StateField.define({
     create(state) {
-      return computeDecorations(state, plugin);
+      return { deco: computeDecorations(state, plugin, /* @__PURE__ */ new Set()), expanded: /* @__PURE__ */ new Set() };
     },
-    update(decorations, tr) {
-      let next = decorations;
+    update(value, tr) {
+      const relevant = tr.docChanged || tr.effects.some((e) => e.is(tikzExpandEffect) || e.is(tikzCollapseEffect) || e.is(tikzRecalcEffect));
+      if (!relevant) return value;
+      const expanded = /* @__PURE__ */ new Set();
+      for (const pos of value.expanded) expanded.add(tr.changes.mapPos(pos, -1));
       for (const e of tr.effects) {
-        if (e.is(tikzRecalcEffect)) {
-          next = computeDecorations(tr.state, plugin);
-        }
+        if (e.is(tikzExpandEffect)) expanded.add(e.value);
+        else if (e.is(tikzCollapseEffect)) expanded.delete(e.value);
       }
-      if (tr.docChanged) {
-        next = computeDecorations(tr.state, plugin);
-      }
-      return next;
+      return { deco: computeDecorations(tr.state, plugin, expanded), expanded };
     },
-    provide: (f) => import_view.EditorView.decorations.from(f)
+    provide: (f) => import_view.EditorView.decorations.from(f, (v) => v.deco)
   });
   return [
     field,
@@ -517,6 +527,7 @@ var IT = {
   "TikZ cache cleared.": "Cache TikZ svuotata.",
   "Rendering TikZ with local TeX...": "Rendering TikZ con TeX locale\u2026",
   "Show TikZ code": "Mostra codice TikZ",
+  "Hide TikZ code": "Nascondi codice TikZ",
   "TikZ rendering error": "Errore di rendering TikZ",
   "Rendering TikZ...": "Rendering TikZ\u2026"
 };
