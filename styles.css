@@ -59,12 +59,14 @@
   text-align: left;
   font-size: var(--font-smaller);
   color: var(--text-muted);
+  line-height: normal;
 }
 
 .tikz-live .tikz-source summary {
   cursor: pointer;
   user-select: none;
   opacity: 0.85;
+  line-height: normal;
 }
 
 .tikz-live .tikz-source summary:hover {
@@ -82,7 +84,9 @@
   padding: 8px;
   font-family: var(--font-monospace);
   font-size: var(--font-smaller);
-  white-space: pre;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
 }
 
 .tikz-live {
