@@ -74,6 +74,33 @@
   white-space: pre;
 }
 
+/* Hide the TikZ code fence in Edit mode; the rendered image is shown instead
+   and the code is revealed on hover. */
+.cm-line.tikz-code-hidden {
+  display: none !important;
+}
+
+.tikz-live .tikz-source {
+  display: none;
+  width: 100%;
+  margin-top: 6px;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  padding: 8px;
+  font-family: var(--font-monospace);
+  font-size: var(--font-smaller);
+  white-space: pre;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.tikz-live:hover .tikz-source {
+  display: block;
+}
+
 .tikz-live {
   display: flex;
   flex-direction: column;

@@ -254,13 +254,14 @@ function findTikzBlocks(state) {
       if (k - n > 5e3) break;
     }
     if (closeLine) {
+      const from = doc.line(n).from;
       const to = doc.line(closeLine).to;
       const codeLines = [];
       for (let x = n + 1; x < closeLine; x++) {
         codeLines.push(doc.line(x).text);
       }
       const code = codeLines.join("\n").trim();
-      if (code) blocks.push({ to, code });
+      if (code) blocks.push({ from, to, fromLine: n, toLine: closeLine, code });
       n = closeLine;
     }
   }
@@ -284,6 +285,10 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
     status.className = "tikz-status";
     status.textContent = this.t("Rendering TikZ...");
     wrap.appendChild(status);
+    const source = document.createElement("pre");
+    source.className = "tikz-source";
+    source.textContent = this.code;
+    wrap.appendChild(source);
     this.renderFn(this.code).then((svg) => {
       if (this.destroyed) return;
       wrap.replaceChildren();
@@ -291,6 +296,10 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
       fig.className = "tikz-figure";
       fig.innerHTML = svg;
       wrap.appendChild(fig);
+      const src2 = document.createElement("pre");
+      src2.className = "tikz-source";
+      src2.textContent = this.code;
+      wrap.appendChild(src2);
     }).catch((err) => {
       if (this.destroyed) return;
       wrap.replaceChildren();
@@ -305,6 +314,10 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
       pre.textContent = err instanceof Error ? err.message : String(err);
       errBox.appendChild(pre);
       wrap.appendChild(errBox);
+      const src2 = document.createElement("pre");
+      src2.className = "tikz-source";
+      src2.textContent = this.code;
+      wrap.appendChild(src2);
     });
     return wrap;
   }
@@ -321,6 +334,10 @@ function computeDecorations(state, plugin) {
   const render = (code) => plugin.tikzRenderer.render(code);
   try {
     for (const block of findTikzBlocks(state)) {
+      for (let k = block.fromLine; k <= block.toLine; k++) {
+        const pos = state.doc.line(k).from;
+        builder.add(pos, pos, import_view.Decoration.line({ class: "tikz-code-hidden" }));
+      }
       builder.add(
         block.to,
         block.to,
