@@ -6,11 +6,12 @@ An **Obsidian** plugin that renders TikZ code blocks (```tikz, ```tikzcd, ```pgf
 
 ## Features
 
-- Renders ```tikz blocks in **Reading mode** (replaces the code block with the rendered SVG).
-- **Live preview** in Edit mode: shows the image below the code block, updating as you type.
+- Renders ```tikz blocks in **Reading mode**: the code block is replaced by the rendered SVG (no code toggle).
+- **Live preview in Edit mode**: shows the rendered image below the block; the code fence is hidden and available behind a closed "Show TikZ code" toggle.
 - Supports **any LaTeX package** (pgfplots, circuitikz, tikz-cd, forest, positioning, arrows.meta, ...) since it uses a real TeX installation.
 - Automatic fallback between `pdflatex + dvisvgm` and `latex + dvisvgm`.
 - Cached results: each diagram is compiled once and cached on disk.
+- **Language**: English by default, optional Italian (Settings → Language).
 
 ## Requirements
 
@@ -59,7 +60,7 @@ Wrap TikZ code in a fenced block:
 ```
 ````
 
-The diagram is rendered automatically. In the plugin settings you can configure the engine, binary paths, and an extra preamble. Use the **Test** button to verify your TeX configuration.
+The diagram is rendered automatically. In the plugin settings you can configure the engine, binary paths, an extra preamble, and the interface language (English by default, Italian optional). Use the **Test** button to verify your TeX configuration.
 
 ## Structure
 
@@ -67,6 +68,7 @@ The diagram is rendered automatically. In the plugin settings you can configure 
 - `src/tikzRenderer.ts` — TeX compilation and SVG conversion
 - `src/tikzPreview.ts` — CodeMirror editor extension for live preview
 - `src/settings.ts` — settings
+- `src/i18n.ts` — translations (English default, Italian optional)
 
 ## License
 
