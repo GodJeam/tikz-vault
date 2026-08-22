@@ -1,5 +1,5 @@
 import { RangeSetBuilder, StateEffect, StateField } from "@codemirror/state";
-import { Decoration, EditorView, WidgetType } from "@codemirror/view";
+import { Decoration, EditorView, WidgetType, type DecorationSet } from "@codemirror/view";
 import type { EditorState } from "@codemirror/state";
 import type TikzVaultPlugin from "./main";
 
@@ -48,19 +48,29 @@ function findTikzBlocks(state: EditorState): TikzBlock[] {
   return blocks;
 }
 
+const tikzExpandEffect = StateEffect.define<number>();
+const tikzCollapseEffect = StateEffect.define<number>();
+const tikzRecalcEffect = StateEffect.define<null>();
+
 class TikzPreviewWidget extends WidgetType {
   private destroyed = false;
 
   constructor(
     readonly code: string,
     private renderFn: (code: string) => Promise<string>,
-    private t: (s: string) => string
+    private t: (s: string) => string,
+    private from: number,
+    private expanded: boolean
   ) {
     super();
   }
 
   eq(other: TikzPreviewWidget): boolean {
-    return other.code === this.code;
+    return (
+      other.code === this.code &&
+      other.from === this.from &&
+      other.expanded === this.expanded
+    );
   }
 
   toDOM(): HTMLElement {
@@ -72,6 +82,21 @@ class TikzPreviewWidget extends WidgetType {
     status.textContent = this.t("Rendering TikZ...");
     wrap.appendChild(status);
 
+    const finish = () => {
+      // Toggle that reveals/hides the REAL code lines in the editor (editable).
+      const btn = document.createElement("button");
+      btn.className = "tikz-source-toggle";
+      btn.textContent = this.expanded ? this.t("Hide TikZ code") : this.t("Show TikZ code");
+      btn.addEventListener("click", () => {
+        const view = EditorView.findFromDOM(wrap);
+        if (!view) return;
+        view.dispatch({
+          effects: this.expanded ? tikzCollapseEffect.of(this.from) : tikzExpandEffect.of(this.from),
+        });
+      });
+      wrap.appendChild(btn);
+    };
+
     this.renderFn(this.code)
       .then((svg) => {
         if (this.destroyed) return;
@@ -80,7 +105,7 @@ class TikzPreviewWidget extends WidgetType {
         fig.className = "tikz-figure";
         fig.innerHTML = svg;
         wrap.appendChild(fig);
-        wrap.appendChild(this.buildSource());
+        finish();
       })
       .catch((err) => {
         if (this.destroyed) return;
@@ -96,23 +121,10 @@ class TikzPreviewWidget extends WidgetType {
         pre.textContent = err instanceof Error ? err.message : String(err);
         errBox.appendChild(pre);
         wrap.appendChild(errBox);
-        wrap.appendChild(this.buildSource());
+        finish();
       });
 
     return wrap;
-  }
-
-  // The source code is shown inside a closed toggle (click to expand).
-  private buildSource(): HTMLElement {
-    const det = document.createElement("details");
-    det.className = "tikz-source";
-    const sum = document.createElement("summary");
-    sum.textContent = this.t("Show TikZ code");
-    det.appendChild(sum);
-    const pre = document.createElement("pre");
-    pre.textContent = this.code;
-    det.appendChild(pre);
-    return det;
   }
 
   destroy(): void {
@@ -124,22 +136,27 @@ class TikzPreviewWidget extends WidgetType {
   }
 }
 
-function computeDecorations(state: EditorState, plugin: TikzVaultPlugin) {
+function computeDecorations(state: EditorState, plugin: TikzVaultPlugin, expanded: Set<number>) {
   if (!plugin.settings.tikzEnabled || !plugin.settings.tikzLivePreview) return Decoration.none;
   const builder = new RangeSetBuilder<Decoration>();
   const render = (code: string) => plugin.tikzRenderer.render(code);
   try {
     for (const block of findTikzBlocks(state)) {
-      // Hide the code fence lines in Edit mode; the image widget below shows
-      // the rendering and the code is available behind a closed toggle.
-      for (let k = block.fromLine; k <= block.toLine; k++) {
-        const pos = state.doc.line(k).from;
-        builder.add(pos, pos, Decoration.line({ class: "tikz-code-hidden" }));
+      // Hide the code fence lines unless the user expanded the block.
+      if (!expanded.has(block.from)) {
+        for (let k = block.fromLine; k <= block.toLine; k++) {
+          const pos = state.doc.line(k).from;
+          builder.add(pos, pos, Decoration.line({ class: "tikz-code-hidden" }));
+        }
       }
       builder.add(
         block.to,
         block.to,
-        Decoration.widget({ widget: new TikzPreviewWidget(block.code, render, plugin.t), block: true, side: 1 })
+        Decoration.widget({
+          widget: new TikzPreviewWidget(block.code, render, plugin.t, block.from, expanded.has(block.from)),
+          block: true,
+          side: 1,
+        })
       );
     }
   } catch (e) {
@@ -148,30 +165,29 @@ function computeDecorations(state: EditorState, plugin: TikzVaultPlugin) {
   return builder.finish();
 }
 
-const tikzRecalcEffect = StateEffect.define<null>();
+const tikzField = StateField.define<{ deco: DecorationSet; expanded: Set<number> }>({
+  create(state: EditorState) {
+    return { deco: computeDecorations(state, plugin, new Set()), expanded: new Set() };
+  },
+  update(value, tr) {
+    const relevant =
+      tr.docChanged ||
+      tr.effects.some((e) => e.is(tikzExpandEffect) || e.is(tikzCollapseEffect) || e.is(tikzRecalcEffect));
+    if (!relevant) return value;
+    const expanded = new Set<number>();
+    for (const pos of value.expanded) expanded.add(tr.changes.mapPos(pos, -1));
+    for (const e of tr.effects) {
+      if (e.is(tikzExpandEffect)) expanded.add(e.value);
+      else if (e.is(tikzCollapseEffect)) expanded.delete(e.value);
+    }
+    return { deco: computeDecorations(tr.state, plugin, expanded), expanded };
+  },
+  provide: (f) => EditorView.decorations.from(f, (v) => v.deco),
+});
 
 export function tikzPreviewExtension(plugin: TikzVaultPlugin) {
-  const field = StateField.define({
-    create(state: EditorState) {
-      return computeDecorations(state, plugin);
-    },
-    update(decorations, tr) {
-      let next = decorations;
-      for (const e of tr.effects) {
-        if (e.is(tikzRecalcEffect)) {
-          next = computeDecorations(tr.state, plugin);
-        }
-      }
-      if (tr.docChanged) {
-        next = computeDecorations(tr.state, plugin);
-      }
-      return next;
-    },
-    provide: (f) => EditorView.decorations.from(f),
-  });
-
   return [
-    field,
+    tikzField,
     EditorView.updateListener.of((update) => {
       if (update.viewportChanged) {
         update.view.dispatch({ effects: tikzRecalcEffect.of(null) });

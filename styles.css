@@ -53,40 +53,22 @@
   display: none !important;
 }
 
-.tikz-live .tikz-source {
-  width: 100%;
+.tikz-live .tikz-source-toggle {
+  align-self: center;
   margin-top: 6px;
-  text-align: left;
+  padding: 2px 12px;
   font-size: var(--font-smaller);
   color: var(--text-muted);
-  line-height: normal;
-}
-
-.tikz-live .tikz-source summary {
-  cursor: pointer;
-  user-select: none;
-  opacity: 0.85;
-  line-height: normal;
-}
-
-.tikz-live .tikz-source summary:hover {
-  opacity: 1;
-  color: var(--interactive-accent);
-}
-
-.tikz-live .tikz-source pre {
-  margin: 6px 0 0;
-  max-height: 220px;
-  overflow: auto;
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-s);
-  padding: 8px;
-  font-family: var(--font-monospace);
-  font-size: var(--font-smaller);
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.5;
+  cursor: pointer;
+  line-height: normal;
+}
+
+.tikz-live .tikz-source-toggle:hover {
+  color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
 }
 
 .tikz-live {
