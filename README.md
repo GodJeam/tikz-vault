@@ -63,11 +63,9 @@ The diagram is rendered automatically. In the plugin settings you can configure 
 
 ## Structure
 
-- `src/main.ts` — entry point, post-processor and live-preview setup
-- `src/tikzRenderer.ts` — TeX compilation and SVG conversion
-- `src/tikzPreview.ts` — CodeMirror editor extension for live preview
-- `src/settings.ts` — settings
-- `src/i18n.ts` — translations (English default, Italian optional)
+- `src/` — TypeScript source
+- `build/` — build tooling (esbuild config, tsconfig)
+- `main.js` / `manifest.json` / `styles.css` — built plugin files (copy into the vault)
 
 ## License
 

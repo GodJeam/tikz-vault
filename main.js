@@ -1,8 +1,8 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -16,6 +16,7 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
 // src/main.ts
 var main_exports = {};
@@ -33,7 +34,9 @@ var import_os = require("os");
 var import_path = require("path");
 var TikzRenderer = class {
   constructor(plugin) {
-    this.inFlight = /* @__PURE__ */ new Map();
+    __publicField(this, "plugin");
+    __publicField(this, "cacheDir");
+    __publicField(this, "inFlight", /* @__PURE__ */ new Map());
     this.plugin = plugin;
     this.cacheDir = (0, import_path.join)((0, import_os.tmpdir)(), "tikz-vault-render");
     (0, import_fs.mkdirSync)(this.cacheDir, { recursive: true });
@@ -278,7 +281,7 @@ var TikzPreviewWidget = class extends import_view.WidgetType {
     this.t = t;
     this.from = from;
     this.expanded = expanded;
-    this.destroyed = false;
+    __publicField(this, "destroyed", false);
   }
   eq(other) {
     return other.code === this.code && other.from === this.from && other.expanded === this.expanded;
@@ -405,6 +408,7 @@ var DEFAULT_SETTINGS = {
 var TikzSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
+    __publicField(this, "plugin");
     this.plugin = plugin;
   }
   display() {
@@ -539,6 +543,11 @@ function translate(lang, text) {
 
 // src/main.ts
 var TikzVaultPlugin = class extends import_obsidian2.Plugin {
+  constructor() {
+    super(...arguments);
+    __publicField(this, "settings");
+    __publicField(this, "tikzRenderer");
+  }
   async onload() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     this.tikzRenderer = new TikzRenderer(this);
