@@ -6,12 +6,11 @@ An **Obsidian** plugin that renders TikZ code blocks (```tikz, ```tikzcd, ```pgf
 
 ## Features
 
-- Renders ```tikz blocks in **Reading mode**: the code block is replaced by the rendered SVG (no code toggle).
-- **Live preview in Edit mode**: shows the rendered image below the block; the code fence is hidden and available behind a closed "Show TikZ code" toggle.
-- Supports **any LaTeX package** (pgfplots, circuitikz, tikz-cd, forest, positioning, arrows.meta, ...) since it uses a real TeX installation.
-- Automatic fallback between `pdflatex + dvisvgm` and `latex + dvisvgm`.
-- Cached results: each diagram is compiled once and cached on disk.
-- **Language**: English by default, optional Italian (Settings → Language).
+- Renders ```tikz, ```tikzcd and ```pgfplots blocks to **SVG using your local TeX** (MiKTeX / TeX Live), in both Reading and Edit mode.
+- Supports **any LaTeX package** (pgfplots, circuitikz, tikz-cd, forest, ...), unlike TikZJax.
+- Automatic `pdflatex + dvisvgm` / `latex + dvisvgm` fallback, with disk caching.
+- In Edit mode the code stays available behind a closed "Show TikZ code" toggle.
+- **English by default**, Italian optional (Settings → Language).
 
 ## Requirements
 
