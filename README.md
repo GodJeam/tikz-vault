@@ -10,7 +10,6 @@ An **Obsidian** plugin that renders TikZ code blocks (```tikz, ```tikzcd, ```pgf
 - Supports **any LaTeX package** (pgfplots, circuitikz, tikz-cd, forest, ...), unlike TikZJax.
 - Automatic `pdflatex + dvisvgm` / `latex + dvisvgm` fallback, with disk caching.
 - In Edit mode the code stays available behind a closed "Show TikZ code" toggle.
-- **English by default**, Italian optional (Settings → Language).
 
 ## Requirements
 
